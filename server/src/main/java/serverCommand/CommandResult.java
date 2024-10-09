@@ -2,7 +2,7 @@ package serverCommand;
 
 public class CommandResult {
     String key;
-    Integer type;// 0 int 1 string
+    Integer type;// 0 int 1 string 2 object
     Boolean isList;
     byte[]data;
     String functionName;

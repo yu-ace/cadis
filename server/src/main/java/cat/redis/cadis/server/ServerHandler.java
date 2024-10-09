@@ -2,21 +2,27 @@ package cat.redis.cadis.server;
 
 import cat.redis.cadis.server.service.CommandService;
 import cat.redis.cadis.server.service.models.Command;
+import cat.redis.cadis.server.storage.MemoryStorage;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.util.CharsetUtil;
+import serverCommand.CommandFactory;
+import serverCommand.CommandResult;
+import serverCommand.ServerCommand;
 
 public class ServerHandler extends ChannelInboundHandlerAdapter {
-    CommandService commandService;
-    //CmdFactory factory = new CmdFactory();
+    //CommandService commandService;
+    MemoryStorage memoryStorage;
+    CommandFactory commandFactory = new CommandFactory();
 
     public ServerHandler() {
     }
 
-    public ServerHandler(CommandService commandService) {
-        this.commandService = commandService;
+    public ServerHandler(CommandService commandService,MemoryStorage memoryStorage) {
+        //this.commandService = commandService;
+        this.memoryStorage = memoryStorage;
     }
 
     @Override
@@ -31,16 +37,10 @@ public class ServerHandler extends ChannelInboundHandlerAdapter {
 
         System.out.println("收到客户端的消息："+message);
 
-        String[] strings = message.split(" ");
-        String name = strings.length > 0 ? strings[0] : null;
-        String key = strings.length > 1 ? strings[1] : null;
-        String value = strings.length > 2 ? strings[2] : null;
-
-        Command command = new Command(name,key,value);
-        result = commandService.executeCommand(command);
+        CommandResult commandResult = commandFactory.create(message, memoryStorage);
 
 
-        ctx.writeAndFlush(Unpooled.copiedBuffer(result.toString(), CharsetUtil.UTF_8));
+        ctx.writeAndFlush(Unpooled.copiedBuffer(commandResult.getFunctionName(), CharsetUtil.UTF_8));
     }
 
 

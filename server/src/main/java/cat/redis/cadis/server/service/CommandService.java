@@ -3,10 +3,14 @@ package cat.redis.cadis.server.service;
 import cat.redis.cadis.server.config.ServerConfig;
 import cat.redis.cadis.server.service.models.Command;
 import cat.redis.cadis.server.storage.MemoryStorage;
+import cat.redis.cadis.server.storage.models.Index;
 import cat.redis.cadis.server.storage.models.Record;
 import io.netty.util.CharsetUtil;
 
+import java.io.ByteArrayOutputStream;
+import java.io.DataOutputStream;
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.function.Function;
 
@@ -70,7 +74,8 @@ public class CommandService {
             if(record.getType() != null){
                 return "0";
             }
-            memoryStorage.set(memoryStorage.buffer,memoryStorage.map,command.getKey(), 1);
+            byte[] newValue = ByteBuffer.allocate(4).putInt(1).array();
+            memoryStorage.set(memoryStorage.buffer,memoryStorage.map,command.getKey(), newValue,"Integer");
             return "1";
         }else {
             return "-1";
@@ -88,11 +93,13 @@ public class CommandService {
     public String setKey(Command command){
         if(command.getKey() != null && command.getValue() != null){
             String value = command.getValue();
+            byte[] valueByte;
             try{
                 int newValue = Integer.parseInt(value);
-                memoryStorage.set(memoryStorage.buffer,memoryStorage.map,command.getKey(), newValue);
+                valueByte = ByteBuffer.allocate(4).putInt(newValue).array();
+                memoryStorage.set(memoryStorage.buffer,memoryStorage.map,command.getKey(), valueByte,"Integer");
             }catch (Exception e){
-                memoryStorage.set(memoryStorage.buffer,memoryStorage.map,command.getKey(), command.getValue());
+                processString(command, value);
             }
             return "1";
         }else {
@@ -100,19 +107,53 @@ public class CommandService {
         }
     }
 
-    //先判断是否是list，再判断下一步
+    private void processString(Command command, Object value) {
+        byte[] valueByte;
+        if(value instanceof String){
+            valueByte = ((String) value).getBytes(StandardCharsets.UTF_8);
+            memoryStorage.set(memoryStorage.buffer,memoryStorage.map,command.getKey(), valueByte,"String");
+        }else {
+            valueByte = processList((List<?>) value);
+            memoryStorage.set(memoryStorage.buffer,memoryStorage.map,command.getKey(), valueByte,"List");
+        }
+    }
+
+    private byte[] processList(List<?> value) {
+        try{
+            ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+            DataOutputStream dataOutputStream = new DataOutputStream(byteArrayOutputStream);
+            dataOutputStream.writeInt(value.size());
+            for(Object v:value){
+                if(v instanceof String){
+                    byte[] bytes = ((String) v).getBytes(StandardCharsets.UTF_8);
+                    dataOutputStream.writeInt(TYPE_STRING);
+                    dataOutputStream.writeInt(bytes.length);
+                    dataOutputStream.write(bytes);
+                }else {
+                    dataOutputStream.writeInt(TYPE_INTEGER);
+                    dataOutputStream.writeInt(4);
+                    dataOutputStream.write((Integer) v);
+                }
+            }
+            return byteArrayOutputStream.toByteArray();
+        }catch (Exception e){
+            e.getStackTrace();
+        }
+        return null;
+    }
+
     public String getValue(Command command){
         String result;
         Record record = memoryStorage.get(command.getKey());
         if(record.getType() != null){
-            if("Integer".equals(record.getType())){
-                ByteBuffer byteBuffer = ByteBuffer.wrap(record.getValue());
-                result = Integer.toString(byteBuffer.getInt());
+            if("List".equals(record.getType())){
+                List<Object> list = getList(record);
+                result = list.toString();
             }else if("String".equals(record.getType())){
                 result = new String(record.getValue(), CharsetUtil.UTF_8);
             }else {
-                List<Object> list = getList(record);
-                result = list.toString();
+                ByteBuffer byteBuffer = ByteBuffer.wrap(record.getValue());
+                result = Integer.toString(byteBuffer.getInt());
             }
         }else {
             result = "null";

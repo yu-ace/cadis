@@ -24,24 +24,31 @@ public class GetCommand extends ServerCommand{
 
     @Override
     public CommandResult execute(String name, String key, String value, MemoryStorage storage) {
+        CommandResult commandResult = new CommandResult();
+        commandResult.setList(false);
         String result;
         Record record = storage.get(key);
         if(record.getType() != null){
-            if("Integer".equals(record.getType())){
-                ByteBuffer byteBuffer = ByteBuffer.wrap(record.getValue());
-                result = Integer.toString(byteBuffer.getInt());
-            }else if("String".equals(record.getType())){
-                result = new String(record.getValue(), CharsetUtil.UTF_8);
-            }else {
+            if("List".equals(record.getType())){
                 List<Object> list = getList(record);
                 result = list.toString();
+                commandResult.setList(true);
+                commandResult.setType(2);
+            }else if("String".equals(record.getType())){
+                result = new String(record.getValue(), CharsetUtil.UTF_8);
+                commandResult.setType(1);
+            }else {
+                ByteBuffer byteBuffer = ByteBuffer.wrap(record.getValue());
+                result = Integer.toString(byteBuffer.getInt());
+                commandResult.setType(0);
             }
         }else {
             result = "null";
         }
-        CommandResult commandResult = new CommandResult();
         commandResult.setData(result.getBytes());
         commandResult.setKey(key);
+        commandResult.setResult(true);
+        commandResult.setFunctionName("get");
         return commandResult;
     }
 

@@ -61,7 +61,7 @@ public class App {
                     @Override
                     protected void initChannel(SocketChannel socketChannel) throws Exception {
                         //给pipeline管道设置处理器
-                        socketChannel.pipeline().addLast(new ServerHandler(commandService));
+                        socketChannel.pipeline().addLast(new ServerHandler(commandService,memoryStorage));
                     }
                 });//给workerGroup的EventLoop对应的管道设置处理器
     }

@@ -7,7 +7,6 @@ import cat.redis.cadis.server.storage.models.Record;
 import java.io.*;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
-import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 public class MemoryStorage {
@@ -91,20 +90,8 @@ public class MemoryStorage {
     }
 
 
-    public void set(ByteBuffer byteBuffer, Map<String, Index> map, String key, Object value) {
-        byte[] valueByte;
-        String type;
-        if(value instanceof String){
-            valueByte = ((String) value).getBytes(StandardCharsets.UTF_8);
-            type = "String";
-        }else if(value instanceof Integer){
-            valueByte = ByteBuffer.allocate(4).putInt((Integer) value).array();
-            type = "Integer";
-        }else{
-            valueByte = processList((List<?>) value);
-            type = "List";
-        }
-        Index index = getIndex(byteBuffer,valueByte, type);
+    public void set(ByteBuffer byteBuffer, Map<String, Index> map, String key, byte[] value,String type) {
+        Index index = getIndex(byteBuffer,value, type);
         map.put(key,index);
     }
 
@@ -137,29 +124,6 @@ public class MemoryStorage {
         return new Index(startPosition, valurLength, type);
     }
 
-    private byte[] processList(List<?> value) {
-        try{
-            ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-            DataOutputStream dataOutputStream = new DataOutputStream(byteArrayOutputStream);
-            dataOutputStream.writeInt(value.size());
-            for(Object v:value){
-                if(v instanceof String){
-                    byte[] bytes = ((String) v).getBytes(StandardCharsets.UTF_8);
-                    dataOutputStream.writeInt(TYPE_STRING);
-                    dataOutputStream.writeInt(bytes.length);
-                    dataOutputStream.write(bytes);
-                }else {
-                    dataOutputStream.writeInt(TYPE_INTEGER);
-                    dataOutputStream.writeInt(4);
-                    dataOutputStream.write((Integer) v);
-                }
-            }
-            return byteArrayOutputStream.toByteArray();
-        }catch (Exception e){
-            e.getStackTrace();
-        }
-        return null;
-    }
 
     public String incr(String key){
         Record record = get(key);
@@ -167,10 +131,12 @@ public class MemoryStorage {
             ByteBuffer byteBuffer = ByteBuffer.wrap(record.getValue());
             int value = byteBuffer.getInt();
             value++;
-            set(buffer,map,key,value);
+            byte[] newValue = ByteBuffer.allocate(4).putInt(value).array();
+            set(buffer,map,key,newValue,"Integer");
             return Integer.toString(value);
         }else if(record.getType() == null){
-            set(buffer,map,key,1);
+            byte[] newValue = ByteBuffer.allocate(4).putInt(1).array();
+            set(buffer,map,key,newValue,"Integer");
             return Integer.toString(1);
         }else {
             return "null";
@@ -183,10 +149,12 @@ public class MemoryStorage {
             ByteBuffer byteBuffer = ByteBuffer.wrap(record.getValue());
             int value = byteBuffer.getInt();
             value--;
-            set(buffer,map,key,value);
+            byte[] newValue = ByteBuffer.allocate(4).putInt(value).array();
+            set(buffer,map,key,newValue,"Integer");
             return Integer.toString(value);
         }else if(record.getType() == null){
-            set(buffer,map,key,-1);
+            byte[] newValue = ByteBuffer.allocate(4).putInt(1).array();
+            set(buffer,map,key,newValue,"Integer");
             return Integer.toString(-1);
         }else {
             return "null";
