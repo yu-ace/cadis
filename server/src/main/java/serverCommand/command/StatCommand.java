@@ -1,13 +1,13 @@
-package serverCommand;
+package serverCommand.command;
 
 import cat.redis.cadis.server.storage.MemoryStorage;
+import serverCommand.CommandResult;
+import serverCommand.ServerCommand;
 
-import java.util.Set;
-
-public class ListCommand extends ServerCommand{
+public class StatCommand extends ServerCommand {
     @Override
     public String getName() {
-        return "list";
+        return "stat";
     }
 
     @Override
@@ -19,23 +19,16 @@ public class ListCommand extends ServerCommand{
     public CommandResult execute(String name, String key, String value, MemoryStorage storage) {
         CommandResult commandResult = new CommandResult();
 
-        StringBuilder stringBuilder = new StringBuilder();
-        Set<String> keys = storage.keyList();
-        if(keys.size() != 0){
-            for(String k:keys){
-                stringBuilder.append(k).append(" ");
-            }
-            commandResult.setData(commandResult.getData());
-        }else {
-            commandResult.setData(null);
-        }
+        Integer usedMemory = storage.usedMemory();
+        int freeMemory = storage.freeMemory();
+        String result = "usedMemory:" + usedMemory + "\nfreeMemory:" + freeMemory;
+        commandResult.setData(result.getBytes());
 
         commandResult.setKey(key);
         commandResult.setResult(true);
         commandResult.setFunctionName("stat");
         commandResult.setType(1);
-        commandResult.setList(true);
+        commandResult.setList(false);
         return commandResult;
-
     }
 }

@@ -1,9 +1,7 @@
 package cat.redis.cadis.server.service;
 
-import cat.redis.cadis.server.config.ServerConfig;
 import cat.redis.cadis.server.service.models.Command;
 import cat.redis.cadis.server.storage.MemoryStorage;
-import cat.redis.cadis.server.storage.models.Index;
 import cat.redis.cadis.server.storage.models.Record;
 import io.netty.util.CharsetUtil;
 

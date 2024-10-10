@@ -1,9 +1,11 @@
-package serverCommand;
+package serverCommand.command;
 
 import cat.redis.cadis.server.storage.MemoryStorage;
 import cat.redis.cadis.server.storage.models.Record;
+import serverCommand.CommandResult;
+import serverCommand.ServerCommand;
 
-public class IncrCommand extends ServerCommand{
+public class IncrCommand extends ServerCommand {
     @Override
     public String getName() {
         return "incr";

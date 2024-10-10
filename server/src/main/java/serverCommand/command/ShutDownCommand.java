@@ -1,8 +1,10 @@
-package serverCommand;
+package serverCommand.command;
 
 import cat.redis.cadis.server.storage.MemoryStorage;
+import serverCommand.CommandResult;
+import serverCommand.ServerCommand;
 
-public class ShutDownCommand extends ServerCommand{
+public class ShutDownCommand extends ServerCommand {
     @Override
     public String getName() {
         return "shutDown";

@@ -59,7 +59,7 @@ public class ScheduledService {
         tasks.forEach(e->{
             Date now = new Date();
             long duration = now.getTime() - e.getSubmitTime().getTime();
-            if(duration % e.getPeriod() ==0){
+            if(duration % e.getPeriod() == 0){
                 e.getFunction().run();
                 e.setCount(e.getCount()+1);
                 e.setLastInvoke(new Date());

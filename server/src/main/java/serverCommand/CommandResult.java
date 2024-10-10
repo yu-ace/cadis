@@ -8,6 +8,18 @@ public class CommandResult {
     String functionName;
     Boolean result;
 
+    public CommandResult() {
+    }
+
+    public CommandResult(String key, Integer type, Boolean isList, byte[] data, String functionName, Boolean result) {
+        this.key = key;
+        this.type = type;
+        this.isList = isList;
+        this.data = data;
+        this.functionName = functionName;
+        this.result = result;
+    }
+
     public String getKey() {
         return key;
     }

@@ -2,7 +2,6 @@ package cat.redis.cadis.server;
 
 import cat.redis.cadis.server.config.ConfigReader;
 import cat.redis.cadis.server.config.ServerConfig;
-import cat.redis.cadis.server.service.CommandService;
 import cat.redis.cadis.server.service.ScheduledService;
 import cat.redis.cadis.server.storage.MemoryStorage;
 import io.netty.bootstrap.ServerBootstrap;
@@ -17,7 +16,6 @@ import org.apache.commons.cli.CommandLine;
 
 public class App {
     ScheduledService scheduledService;
-    CommandService commandService;
     MemoryStorage memoryStorage;
 
     EventLoopGroup bossGroup;
@@ -34,13 +32,12 @@ public class App {
         ServerConfig serverConfig = config.readFromFile(redisConfig);
         App app = new App();
         app.init(serverConfig);
-        app.run();
+        app.run(serverConfig.getInetPort());
     }
 
     public void init(ServerConfig serverConfig) throws Exception {
         scheduledService = new ScheduledService(serverConfig);
         memoryStorage = new MemoryStorage(serverConfig);
-        commandService = new CommandService(memoryStorage);
         scheduledService.submitTask(memoryStorage.clean(),serverConfig.getPeriod());
 
         //创建两个线程组 boosGroup、workerGroup
@@ -61,16 +58,16 @@ public class App {
                     @Override
                     protected void initChannel(SocketChannel socketChannel) throws Exception {
                         //给pipeline管道设置处理器
-                        socketChannel.pipeline().addLast(new ServerHandler(commandService,memoryStorage));
+                        socketChannel.pipeline().addLast(new ServerHandler(memoryStorage));
                     }
                 });//给workerGroup的EventLoop对应的管道设置处理器
     }
 
-    public void run() throws Exception{
+    public void run(Integer inetPort) throws Exception{
         while (true){
             try {
                 //绑定端口号，启动服务端
-                channelFuture = bootstrap.bind(6666).sync();
+                channelFuture = bootstrap.bind(inetPort).sync();
                 //对关闭通道进行监听
                 channelFuture.channel().closeFuture().sync();
             } finally {

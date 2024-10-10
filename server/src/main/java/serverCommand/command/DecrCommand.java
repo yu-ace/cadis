@@ -1,8 +1,10 @@
-package serverCommand;
+package serverCommand.command;
 
 import cat.redis.cadis.server.storage.MemoryStorage;
+import serverCommand.CommandResult;
+import serverCommand.ServerCommand;
 
-public class DecrCommand extends ServerCommand{
+public class DecrCommand extends ServerCommand {
     @Override
     public String getName() {
         return "decr";
@@ -17,7 +19,7 @@ public class DecrCommand extends ServerCommand{
     public CommandResult execute(String name, String key, String value, MemoryStorage storage) {
         CommandResult commandResult = new CommandResult();
 
-        String result = storage.incr(key);
+        String result = storage.decr(key);
 
         commandResult.setData(result.getBytes());
         commandResult.setKey(key);

@@ -1,8 +1,8 @@
 package serverCommand;
 
 import cat.redis.cadis.server.storage.MemoryStorage;
+import serverCommand.command.*;
 
-import java.lang.reflect.InvocationTargetException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -11,14 +11,14 @@ public class CommandFactory {
 
     public CommandFactory(){
         map = new HashMap<>();
-        map.put("set",SetCommand.class);
+        map.put("set", SetCommand.class);
         map.put("get",GetCommand.class);
-        map.put("setNX",SetNXCommand.class);
+        map.put("setNX", SetNXCommand.class);
         map.put("exists",ExistsCommand.class);
         map.put("delete",DeleteCommand.class);
-        map.put("list",ListCommand.class);
-        map.put("stat",StatCommand.class);
-        map.put("shutDown",ShutDownCommand.class);
+        map.put("list", ListCommand.class);
+        map.put("stat", StatCommand.class);
+        map.put("shutDown", ShutDownCommand.class);
         map.put("incr",IncrCommand.class);
         map.put("decr",DecrCommand.class);
     }
@@ -30,8 +30,12 @@ public class CommandFactory {
         String value = strings.length > 2 ? strings[2] : null;
 
         Class<? extends ServerCommand> clazz = map.get(name);
+        if(clazz == null){
+            return new CommandResult("null",0,false,"null".getBytes(),"null",false);
+        }
         ServerCommand serverCommand = clazz.getDeclaredConstructor().newInstance();
         CommandResult execute = serverCommand.execute(name, key, value, storage);
         return execute;
     }
 }
+

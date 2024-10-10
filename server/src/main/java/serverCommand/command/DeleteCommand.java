@@ -1,9 +1,11 @@
-package serverCommand;
+package serverCommand.command;
 
 import cat.redis.cadis.server.service.models.Command;
 import cat.redis.cadis.server.storage.MemoryStorage;
+import serverCommand.CommandResult;
+import serverCommand.ServerCommand;
 
-public class DeleteCommand extends ServerCommand{
+public class DeleteCommand extends ServerCommand {
     @Override
     public String getName() {
         return "delete";
@@ -17,6 +19,7 @@ public class DeleteCommand extends ServerCommand{
     @Override
     public CommandResult execute(String name, String key, String value, MemoryStorage storage) {
         String result = storage.delete(key);
+
         CommandResult commandResult = new CommandResult();
         commandResult.setList(false);
         commandResult.setFunctionName("delete");

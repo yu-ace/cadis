@@ -1,10 +1,12 @@
-package serverCommand;
+package serverCommand.command;
 
 import cat.redis.cadis.server.service.models.Command;
 import cat.redis.cadis.server.storage.MemoryStorage;
 import cat.redis.cadis.server.storage.models.Record;
+import serverCommand.CommandResult;
+import serverCommand.ServerCommand;
 
-public class ExistsCommand extends ServerCommand{
+public class ExistsCommand extends ServerCommand {
     @Override
     public String getName() {
         return "exists";
