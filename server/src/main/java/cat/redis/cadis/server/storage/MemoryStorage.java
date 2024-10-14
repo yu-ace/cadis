@@ -12,8 +12,6 @@ import java.util.*;
 public class MemoryStorage {
     public Map<String, Index> map;
     public ByteBuffer buffer;
-    private static final Integer TYPE_INTEGER = 0;
-    private static final Integer TYPE_STRING = 1;
 
     String dataPath;
     String mapPath;
@@ -53,7 +51,7 @@ public class MemoryStorage {
                 buffer.flip();
             }
         }else{
-            buffer = ByteBuffer.allocate(1024*1024);
+            buffer = ByteBuffer.allocate(totalMemory);
         }
     }
 
@@ -109,7 +107,7 @@ public class MemoryStorage {
         int position = 4 + 8 * size;
         int startPosition;
         if(size == 0){
-            startPosition = 1024*1024 - valurLength;
+            startPosition = totalMemory - valurLength;
         }else {
             buffer.position(position - 8);
             int lastPosition = buffer.getInt();
@@ -203,7 +201,7 @@ public class MemoryStorage {
                 synchronized (this){
                     try{
                         System.out.println("clean");
-                        ByteBuffer byteBuffer = ByteBuffer.allocate(1024 * 1024);
+                        ByteBuffer byteBuffer = ByteBuffer.allocate(totalMemory);
                         Set<String> strings = keyList();
                         for(String s:strings){
                             set(byteBuffer,map,s,get(s));

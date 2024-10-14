@@ -2,6 +2,7 @@ package cat.redis.cadis.server.config;
 
 import cn.hutool.core.io.FileUtil;
 import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.Options;
 import org.yaml.snakeyaml.Yaml;
@@ -19,7 +20,7 @@ public class ConfigReader {
         Options options = new Options();
         options.addOption("h","help",false,"print help");
         options.addOption("c","configPath",true,"the path of config");
-        org.apache.commons.cli.CommandLineParser parser = new DefaultParser();
+        CommandLineParser parser = new DefaultParser();
         try{
             return parser.parse(options, args);
         }catch (Exception e){

@@ -14,13 +14,9 @@ public class ScheduledService {
     List<ScheduledItem> tasks;
     ScheduledExecutorService scheduler;
 
-    public ScheduledService() {
+    public ScheduledService(ServerConfig serverConfig){
         tasks = new ArrayList<>();
         scheduler = Executors.newScheduledThreadPool(1);
-    }
-
-    public ScheduledService(ServerConfig serverConfig){
-        this();
         scheduler.scheduleAtFixedRate(this::loop,serverConfig.getInitialDelay(),
                 serverConfig.getPeriod(), serverConfig.getTimeUnit());
     }

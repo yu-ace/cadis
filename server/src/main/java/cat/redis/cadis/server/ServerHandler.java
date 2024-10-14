@@ -11,13 +11,14 @@ import serverCommand.CommandResult;
 
 public class ServerHandler extends ChannelInboundHandlerAdapter {
     MemoryStorage memoryStorage;
-    CommandFactory commandFactory = new CommandFactory();
+    CommandFactory commandFactory;
 
     public ServerHandler() {
     }
 
     public ServerHandler(MemoryStorage memoryStorage) {
         this.memoryStorage = memoryStorage;
+        commandFactory = new CommandFactory();
     }
 
     @Override

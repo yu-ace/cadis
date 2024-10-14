@@ -1,6 +1,5 @@
 package serverCommand.command;
 
-import cat.redis.cadis.server.service.models.Command;
 import cat.redis.cadis.server.storage.MemoryStorage;
 import cat.redis.cadis.server.storage.models.Record;
 import serverCommand.CommandResult;
