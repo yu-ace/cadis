@@ -1,4 +1,4 @@
-package serverCommand;
+package cat.redis.cadis.server.serverCommand;
 
 public class CommandResult {
     String key;

@@ -1,13 +1,13 @@
-package serverCommand.command;
+package cat.redis.cadis.server.serverCommand.command;
 
+import cat.redis.cadis.server.serverCommand.CommandResult;
+import cat.redis.cadis.server.serverCommand.ServerCommand;
 import cat.redis.cadis.server.storage.MemoryStorage;
 import cat.redis.cadis.server.storage.models.Record;
-import serverCommand.CommandResult;
-import serverCommand.ServerCommand;
 
 import java.nio.ByteBuffer;
 
-public class SetNXCommand extends ServerCommand {
+public class SetNXCommand implements ServerCommand {
     @Override
     public String getName() {
         return "setNX";

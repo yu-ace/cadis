@@ -8,11 +8,14 @@ import java.io.*;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.util.*;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class MemoryStorage {
     public Map<String, Index> map;
     public ByteBuffer buffer;
-
+    private final ReentrantReadWriteLock readWriteLock = new ReentrantReadWriteLock();
+    private final ReentrantReadWriteLock.ReadLock readLock = readWriteLock.readLock();
+    private final ReentrantReadWriteLock.WriteLock writeLock = readWriteLock.writeLock();
     String dataPath;
     String mapPath;
     Integer totalMemory;
@@ -22,8 +25,12 @@ public class MemoryStorage {
         dataPath = serverConfig.getDataPath();
         mapPath = serverConfig.getMapPath();
         totalMemory = serverConfig.getTotalMemory();
-        initMap();
         init();
+    }
+
+    public void init() throws Exception{
+        initMap();
+        initData();
     }
 
     public void initMap() {
@@ -40,7 +47,7 @@ public class MemoryStorage {
         }
     }
 
-    public void init() throws Exception {
+    public void initData() throws Exception {
         File file = new File(dataPath);
         if(file.exists()){
             try(RandomAccessFile read = new RandomAccessFile(dataPath, "rw")) {
@@ -55,13 +62,23 @@ public class MemoryStorage {
         }
     }
 
+    public void shutDown() throws Exception{
+        writeLock.lock();
+        try{
+            saveData();
+            saveMap();
+        }finally {
+            writeLock.unlock();
+        }
+    }
+
     public void saveMap() throws Exception {
         FileOutputStream fileOutputStream = new FileOutputStream(mapPath);
         ObjectOutputStream objectOutputStream = new ObjectOutputStream(fileOutputStream);
         objectOutputStream.writeObject(map);
     }
 
-    public void shutDown() throws Exception{
+    public void saveData() throws Exception{
         RandomAccessFile file = new RandomAccessFile(dataPath,"rw");
         FileChannel channel = file.getChannel();
         buffer.flip();
@@ -71,148 +88,173 @@ public class MemoryStorage {
     }
 
     public Record get(String key) {
-        Record record;
-        if(map.containsKey(key)){
-            buffer.limit(totalMemory);
-            Index index = map.get(key);
-            buffer.position(index.getPosition());
-            buffer.limit(index.getPosition() + index.getLength());
-            ByteBuffer slice = buffer.slice();
-            byte[] bytes = new byte[slice.remaining()];
-            slice.get(bytes);
-            record = new Record(key,bytes,map.get(key).getType());
-        }else {
-            record = new Record(key,null,null);
+        readLock.lock();
+        try{
+            Record record;
+            if(map.containsKey(key)){
+                buffer.limit(totalMemory);
+                Index index = map.get(key);
+                buffer.position(index.getPosition());
+                buffer.limit(index.getPosition() + index.getLength());
+                ByteBuffer slice = buffer.slice();
+                byte[] bytes = new byte[slice.remaining()];
+                slice.get(bytes);
+                record = new Record(key,bytes,map.get(key).getType());
+            }else {
+                record = new Record(key,null,null);
+            }
+            return record;
+        }finally {
+            readLock.unlock();
         }
-        return record;
     }
 
 
     public void set(ByteBuffer byteBuffer, Map<String, Index> map, String key, byte[] value,String type) {
-        Index index = getIndex(byteBuffer,value, type);
-        map.put(key,index);
-    }
+        writeLock.lock();
+        try{
+            int valurLength = value.length;
+            byteBuffer.position(0);
+            int size = byteBuffer.getInt();
+            byteBuffer.position(0);
+            byteBuffer.putInt(size + 1);
+            int position = 4 + 8 * size;
+            int startPosition;
+            if(size == 0){
+                startPosition = totalMemory - valurLength;
+            }else {
+                byteBuffer.position(position - 8);
+                int lastPosition = byteBuffer.getInt();
+                startPosition = lastPosition - valurLength;
+            }
+            byteBuffer.position(position);
+            byteBuffer.putInt(startPosition);
+            byteBuffer.putInt(valurLength);
+            byteBuffer.position(startPosition);
+            byteBuffer.put(value);
+            Index index = new Index(startPosition, valurLength, type);
 
-    public void set(ByteBuffer byteBuffer, Map<String, Index> map, String key, Record record) {
-        Index index = getIndex(byteBuffer,record.getValue(), record.getType());
-        map.put(key,index);
-    }
-
-    private Index getIndex(ByteBuffer buffer, byte[] valueByte, String type) {
-        int valurLength = valueByte.length;
-        buffer.position(0);
-        int size = buffer.getInt();
-        buffer.position(0);
-        buffer.putInt(size + 1);
-        int position = 4 + 8 * size;
-        int startPosition;
-        if(size == 0){
-            startPosition = totalMemory - valurLength;
-        }else {
-            buffer.position(position - 8);
-            int lastPosition = buffer.getInt();
-            startPosition = lastPosition - valurLength;
-        }
-        buffer.position(position);
-        buffer.putInt(startPosition);
-        buffer.putInt(valurLength);
-        buffer.position(startPosition);
-        buffer.put(valueByte);
-
-        return new Index(startPosition, valurLength, type);
-    }
-
-
-    public String incr(String key){
-        Record record = get(key);
-        if("Integer".equals(record.getType())){
-            ByteBuffer byteBuffer = ByteBuffer.wrap(record.getValue());
-            int value = byteBuffer.getInt();
-            value++;
-            byte[] newValue = ByteBuffer.allocate(4).putInt(value).array();
-            set(buffer,map,key,newValue,"Integer");
-            return Integer.toString(value);
-        }else if(record.getType() == null){
-            byte[] newValue = ByteBuffer.allocate(4).putInt(1).array();
-            set(buffer,map,key,newValue,"Integer");
-            return Integer.toString(1);
-        }else {
-            return "null";
+            map.put(key,index);
+        }finally {
+            writeLock.unlock();
         }
     }
 
-    public String decr(String key){
-        Record record = get(key);
-        if("Integer".equals(record.getType())){
-            ByteBuffer byteBuffer = ByteBuffer.wrap(record.getValue());
-            int value = byteBuffer.getInt();
-            value--;
-            byte[] newValue = ByteBuffer.allocate(4).putInt(value).array();
-            set(buffer,map,key,newValue,"Integer");
-            return Integer.toString(value);
-        }else if(record.getType() == null){
-            byte[] newValue = ByteBuffer.allocate(4).putInt(1).array();
-            set(buffer,map,key,newValue,"Integer");
-            return Integer.toString(-1);
-        }else {
-            return "null";
+
+    public String increment(String key){
+        writeLock.lock();
+        try{
+            Record record = get(key);
+            if("Integer".equals(record.getType())){
+                ByteBuffer byteBuffer = ByteBuffer.wrap(record.getValue());
+                int value = byteBuffer.getInt();
+                value++;
+                byte[] newValue = ByteBuffer.allocate(4).putInt(value).array();
+                set(buffer,map,key,newValue,"Integer");
+                return Integer.toString(value);
+            }else if(record.getType() == null){
+                byte[] newValue = ByteBuffer.allocate(4).putInt(1).array();
+                set(buffer,map,key,newValue,"Integer");
+                return Integer.toString(1);
+            }else {
+                return "null";
+            }
+        }finally {
+            writeLock.unlock();
+        }
+    }
+
+    public String decrement(String key){
+        writeLock.lock();
+        try{
+            Record record = get(key);
+            if("Integer".equals(record.getType())){
+                ByteBuffer byteBuffer = ByteBuffer.wrap(record.getValue());
+                int value = byteBuffer.getInt();
+                value--;
+                byte[] newValue = ByteBuffer.allocate(4).putInt(value).array();
+                set(buffer,map,key,newValue,"Integer");
+                return Integer.toString(value);
+            }else if(record.getType() == null){
+                byte[] newValue = ByteBuffer.allocate(4).putInt(1).array();
+                set(buffer,map,key,newValue,"Integer");
+                return Integer.toString(-1);
+            }else {
+                return "null";
+            }
+        }finally {
+            writeLock.unlock();
         }
     }
 
     public Set<String> keyList(){
-        return map.keySet();
+        readLock.lock();
+        try{
+            return map.keySet();
+        }finally {
+            readLock.unlock();
+        }
     }
 
     public String delete(String key){
-        String response;
-        if(!map.containsKey(key)){
-            response = "key is null";
-        }else {
-            map.remove(key);
-            response = "delete ok";
+        writeLock.lock();
+        try{
+            String response;
+            if(!map.containsKey(key)){
+                response = "key is null";
+            }else {
+                map.remove(key);
+                response = "delete ok";
+            }
+            return response;
+        }finally {
+            writeLock.unlock();
         }
-        return response;
     }
 
     public Integer usedMemory(){
-        int usedMemory;
-        buffer.position(0);
-        int size = buffer.getInt();
-        if(size != 0){
-            int index = 4 + 8 * (size - 1);
-            buffer.position(index);
-            int lastStartPosition = buffer.getInt();
-            int userHeadPosition = 4 + 8 * size;
-            usedMemory = totalMemory - lastStartPosition + userHeadPosition;
-        }else {
-            usedMemory = 0;
+        readLock.lock();
+        try{
+            int usedMemory;
+            buffer.position(0);
+            int size = buffer.getInt();
+            if(size != 0){
+                int index = 4 + 8 * (size - 1);
+                buffer.position(index);
+                int lastStartPosition = buffer.getInt();
+                int userHeadPosition = 4 + 8 * size;
+                usedMemory = totalMemory - lastStartPosition + userHeadPosition;
+            }else {
+                usedMemory = 0;
+            }
+            return usedMemory;
+        }finally {
+            readLock.unlock();
         }
-        return usedMemory;
     }
 
     public Integer freeMemory(){
-        return totalMemory - usedMemory();
+        readLock.lock();
+        try{
+            return totalMemory - usedMemory();
+        }finally {
+            readLock.unlock();
+        }
     }
 
-    public Runnable clean() {
-        return new Runnable() {
-            @Override
-            public void run() {
-                synchronized (this){
-                    try{
-                        System.out.println("clean");
-                        ByteBuffer byteBuffer = ByteBuffer.allocate(totalMemory);
-                        Set<String> strings = keyList();
-                        for(String s:strings){
-                            set(byteBuffer,map,s,get(s));
-                        }
-                        buffer = byteBuffer;
-                    }catch (Exception e){
-                        System.out.println(e.getMessage());
-                    }
-                }
+    public void clean() {
+        writeLock.lock();
+        try{
+            System.out.println("clean");
+            ByteBuffer byteBuffer = ByteBuffer.allocate(totalMemory);
+            Set<String> strings = keyList();
+            for (String s : strings) {
+                set(byteBuffer, map, s, get(s).getValue(),get(s).getType());
             }
-        };
+            buffer = byteBuffer;
+        }finally {
+            writeLock.unlock();
+        }
     }
 
 }

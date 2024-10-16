@@ -30,6 +30,9 @@ public class ScheduledService {
         item.setLastInvoke(null);
         tasks.add(item);
         return tasks.size()-1;//返回这个任务得id
+
+        //scheduler.scheduleAtFixedRate(this::loop,serverConfig.getInitialDelay(),
+        //                serverConfig.getPeriod(), serverConfig.getTimeUnit());
     }
 
     public int delayTask(int taskId,Long delayTime){

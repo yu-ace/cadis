@@ -38,7 +38,7 @@ public class App {
     public void init(ServerConfig serverConfig) throws Exception {
         scheduledService = new ScheduledService(serverConfig);
         memoryStorage = new MemoryStorage(serverConfig);
-        scheduledService.submitTask(memoryStorage.clean(),serverConfig.getPeriod());
+        scheduledService.submitTask(() -> memoryStorage.clean(), serverConfig.getPeriod());
 
         //创建两个线程组 boosGroup、workerGroup
         bossGroup = new NioEventLoopGroup();

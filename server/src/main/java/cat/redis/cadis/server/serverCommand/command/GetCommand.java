@@ -1,16 +1,16 @@
-package serverCommand.command;
+package cat.redis.cadis.server.serverCommand.command;
 
 import cat.redis.cadis.server.storage.MemoryStorage;
 import cat.redis.cadis.server.storage.models.Record;
 import io.netty.util.CharsetUtil;
-import serverCommand.CommandResult;
-import serverCommand.ServerCommand;
+import cat.redis.cadis.server.serverCommand.CommandResult;
+import cat.redis.cadis.server.serverCommand.ServerCommand;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
-public class GetCommand extends ServerCommand {
+public class GetCommand implements ServerCommand {
     private static final Integer TYPE_STRING = 1;
 
     @Override

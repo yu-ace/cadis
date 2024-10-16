@@ -1,8 +1,8 @@
-package serverCommand.command;
+package cat.redis.cadis.server.serverCommand.command;
 
+import cat.redis.cadis.server.serverCommand.CommandResult;
 import cat.redis.cadis.server.storage.MemoryStorage;
-import serverCommand.CommandResult;
-import serverCommand.ServerCommand;
+import cat.redis.cadis.server.serverCommand.ServerCommand;
 
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
@@ -10,7 +10,7 @@ import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 
-public class SetCommand extends ServerCommand {
+public class SetCommand implements ServerCommand {
     private static final Integer TYPE_INTEGER = 0;
     private static final Integer TYPE_STRING = 1;
     @Override
