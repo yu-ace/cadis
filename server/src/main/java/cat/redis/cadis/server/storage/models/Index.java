@@ -6,14 +6,15 @@ public class Index implements Serializable {
     private Integer position;
     private Integer length;
     private String type;
-
+    private Integer pageNumber;
     public Index() {
     }
 
-    public Index(Integer position, Integer length, String type) {
+    public Index(Integer position, Integer length, String type, Integer pageNumber) {
         this.position = position;
         this.length = length;
         this.type = type;
+        this.pageNumber = pageNumber;
     }
 
     public Integer getPosition() {
@@ -38,5 +39,13 @@ public class Index implements Serializable {
 
     public void setType(String type) {
         this.type = type;
+    }
+
+    public Integer getPageNumber() {
+        return pageNumber;
+    }
+
+    public void setPageNumber(Integer pageNumber) {
+        this.pageNumber = pageNumber;
     }
 }

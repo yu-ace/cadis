@@ -24,9 +24,10 @@ public class GetCommand implements ServerCommand {
     }
 
     @Override
-    public CommandResult execute(String name, String key, String value, MemoryStorage storage) {
+    public CommandResult execute(String name, String key, String value, MemoryStorage storage) throws Exception{
         CommandResult commandResult = new CommandResult();
         commandResult.setList(false);
+        commandResult.setType(-1);
         String result;
         Record record = storage.get(key);
         if(record.getType() != null){

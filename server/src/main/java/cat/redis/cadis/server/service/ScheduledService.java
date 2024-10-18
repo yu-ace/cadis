@@ -14,25 +14,23 @@ public class ScheduledService {
     List<ScheduledItem> tasks;
     ScheduledExecutorService scheduler;
 
-    public ScheduledService(ServerConfig serverConfig){
+    public ScheduledService(){
         tasks = new ArrayList<>();
         scheduler = Executors.newScheduledThreadPool(1);
-        scheduler.scheduleAtFixedRate(this::loop,serverConfig.getInitialDelay(),
-                serverConfig.getPeriod(), serverConfig.getTimeUnit());
+
     }
 
-    public int submitTask(Runnable function,int period){
+    public int submitTask(Runnable function,ServerConfig serverConfig){
         ScheduledItem item = new ScheduledItem();
         item.setFunction(function);
         item.setCount(0);
         item.setSubmitTime(new Date());
-        item.setPeriod(period);
+        item.setPeriod(serverConfig.getPeriod());
         item.setLastInvoke(null);
         tasks.add(item);
+        scheduler.scheduleAtFixedRate(function,serverConfig.getInitialDelay(),serverConfig.getPeriod(),
+                serverConfig.getTimeUnit());
         return tasks.size()-1;//返回这个任务得id
-
-        //scheduler.scheduleAtFixedRate(this::loop,serverConfig.getInitialDelay(),
-        //                serverConfig.getPeriod(), serverConfig.getTimeUnit());
     }
 
     public int delayTask(int taskId,Long delayTime){

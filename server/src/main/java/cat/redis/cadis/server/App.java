@@ -36,9 +36,9 @@ public class App {
     }
 
     public void init(ServerConfig serverConfig) throws Exception {
-        scheduledService = new ScheduledService(serverConfig);
+        scheduledService = new ScheduledService();
         memoryStorage = new MemoryStorage(serverConfig);
-        scheduledService.submitTask(() -> memoryStorage.clean(), serverConfig.getPeriod());
+        scheduledService.submitTask(() -> memoryStorage.clean(), serverConfig);
 
         //创建两个线程组 boosGroup、workerGroup
         bossGroup = new NioEventLoopGroup();
@@ -64,16 +64,14 @@ public class App {
     }
 
     public void run(Integer inetPort) throws Exception{
-        while (true){
-            try {
-                //绑定端口号，启动服务端
-                channelFuture = bootstrap.bind(inetPort).sync();
-                //对关闭通道进行监听
-                channelFuture.channel().closeFuture().sync();
-            } finally {
-                bossGroup.shutdownGracefully();
-                workerGroup.shutdownGracefully();
-            }
+        try {
+            //绑定端口号，启动服务端
+            channelFuture = bootstrap.bind(inetPort).sync();
+            //对关闭通道进行监听
+            channelFuture.channel().closeFuture().sync();
+        } finally {
+            bossGroup.shutdownGracefully();
+            workerGroup.shutdownGracefully();
         }
     }
 }

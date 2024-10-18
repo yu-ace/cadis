@@ -19,7 +19,7 @@ public class SetNXCommand implements ServerCommand {
     }
 
     @Override
-    public CommandResult execute(String name, String key, String value, MemoryStorage storage) {
+    public CommandResult execute(String name, String key, String value, MemoryStorage storage) throws Exception{
         CommandResult commandResult = new CommandResult();
 
         if(key != null){
@@ -28,7 +28,7 @@ public class SetNXCommand implements ServerCommand {
                 commandResult.setData("0".getBytes());
             }else {
                 byte[] newValue = ByteBuffer.allocate(4).putInt(1).array();
-                storage.set(storage.buffer,storage.map,key, newValue,"Integer");
+                storage.set(key, newValue,"Integer");
                 commandResult.setData("1".getBytes());
             }
         }else {

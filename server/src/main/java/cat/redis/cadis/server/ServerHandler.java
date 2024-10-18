@@ -48,22 +48,21 @@ public class ServerHandler extends ChannelInboundHandlerAdapter {
         ctx.writeAndFlush(Unpooled.copiedBuffer(result, CharsetUtil.UTF_8));
     }
 
-    private String getResult(String name, String key, String value, ServerCommand serverCommand) {
-        String result;
+    private String getResult(String name, String key, String value, ServerCommand serverCommand) throws Exception{
         if(serverCommand == null) {
             return  "null";
         }
         CommandResult execute = serverCommand.execute(name, key, value, memoryStorage);
         if(execute.getData() != null && execute.getType() != 0){
-            result = new String(execute.getData(), CharsetUtil.UTF_8);
-        }else if("set".equals(name) && execute.getType() == 0){
-            result = String.valueOf(ByteBuffer.wrap(execute.getData()).getInt());
-        }else if("get".equals(name) && execute.getType() == 0){
-            result = new String(execute.getData(), CharsetUtil.UTF_8);
-        }else {
-            result = "null";
+            return new String(execute.getData(), CharsetUtil.UTF_8);
         }
-        return result;
+        if("set".equals(name) && execute.getType() == 0){
+            return String.valueOf(ByteBuffer.wrap(execute.getData()).getInt());
+        }
+        if("get".equals(name) && execute.getType() == 0){
+            return new String(execute.getData(), CharsetUtil.UTF_8);
+        }
+        return "null";
     }
 
     @Override

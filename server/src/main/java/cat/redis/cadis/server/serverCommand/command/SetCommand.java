@@ -24,16 +24,17 @@ public class SetCommand implements ServerCommand {
     }
 
     @Override
-    public CommandResult execute(String name, String key, String value, MemoryStorage storage) {
+    public CommandResult execute(String name, String key, String value, MemoryStorage storage) throws Exception{
         CommandResult commandResult = new CommandResult();
         commandResult.setKey(key);
         commandResult.setList(false);
+        commandResult.setType(-1);
         if(key != null && value != null){
             byte[] valueByte;
             try{
                 int newValue = Integer.parseInt(value);
                 valueByte = ByteBuffer.allocate(4).putInt(newValue).array();
-                storage.set(storage.buffer,storage.map,key, valueByte,"Integer");
+                storage.set(key, valueByte,"Integer");
                 commandResult.setType(0);
             }catch (Exception e){
                 valueByte = processString(commandResult,key, value,storage);
@@ -47,15 +48,16 @@ public class SetCommand implements ServerCommand {
         return commandResult;
     }
 
-    private byte[] processString(CommandResult commandResult,String key, Object value, MemoryStorage storage) {
+    private byte[] processString(CommandResult commandResult, String key, Object value, MemoryStorage storage)
+            throws Exception{
         byte[] valueByte;
         if(value instanceof String){
             valueByte = ((String) value).getBytes(StandardCharsets.UTF_8);
-            storage.set(storage.buffer,storage.map,key, valueByte,"String");
+            storage.set(key, valueByte,"String");
             commandResult.setType(1);
         }else {
             valueByte = processList((List<?>) value);
-            storage.set(storage.buffer,storage.map,key, valueByte,"List");
+            storage.set(key, valueByte,"List");
             commandResult.setType(2);
             commandResult.setList(true);
         }

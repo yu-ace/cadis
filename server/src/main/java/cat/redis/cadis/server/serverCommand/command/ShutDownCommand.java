@@ -16,7 +16,7 @@ public class ShutDownCommand implements ServerCommand {
     }
 
     @Override
-    public CommandResult execute(String name, String key, String value, MemoryStorage storage) {
+    public CommandResult execute(String name, String key, String value, MemoryStorage storage) throws Exception{
         CommandResult commandResult = new CommandResult();
 
         try{

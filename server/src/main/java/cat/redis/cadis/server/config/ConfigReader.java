@@ -53,7 +53,9 @@ public class ConfigReader {
         Integer totalMemory = (Integer) config.get("totalMemory");
         String dataPath = (String) config.get("dataPath");
         String mapPath = (String) config.get("mapPath");
-        return new ServerConfig(inetHost,inetPort,initialDelay,period,timeUnit,totalMemory,dataPath,mapPath);
+        String pageNumberPath = (String) config.get("pageNumberPath");
+        return new ServerConfig(inetHost,inetPort,initialDelay,period,timeUnit,
+                totalMemory,dataPath,mapPath,pageNumberPath);
     }
 
 

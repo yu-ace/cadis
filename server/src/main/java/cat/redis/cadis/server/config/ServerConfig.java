@@ -13,12 +13,13 @@ public class ServerConfig {
     private Integer totalMemory;
     private String dataPath;
     private String mapPath;
+    private String pageNumberPath;
 
     public ServerConfig() {
     }
 
     public ServerConfig(String inetHost, Integer inetPort, Integer initialDelay, Integer period, TimeUnit timeUnit,
-                        Integer totalMemory, String dataPath, String mapPath) {
+                        Integer totalMemory, String dataPath, String mapPath, String pageNumberPath) {
         this.inetHost = inetHost;
         this.inetPort = inetPort;
         this.initialDelay = initialDelay;
@@ -27,6 +28,7 @@ public class ServerConfig {
         this.totalMemory = totalMemory;
         this.dataPath = dataPath;
         this.mapPath = mapPath;
+        this.pageNumberPath = pageNumberPath;
     }
 
     public String getInetHost() {
@@ -91,5 +93,13 @@ public class ServerConfig {
 
     public void setMapPath(String mapPath) {
         this.mapPath = mapPath;
+    }
+
+    public String getPageNumberPath() {
+        return pageNumberPath;
+    }
+
+    public void setPageNumberPath(String pageNumberPath) {
+        this.pageNumberPath = pageNumberPath;
     }
 }
