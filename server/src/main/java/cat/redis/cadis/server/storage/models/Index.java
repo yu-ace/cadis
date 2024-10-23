@@ -5,15 +5,17 @@ import java.io.Serializable;
 public class Index implements Serializable {
     private Integer position;
     private Integer length;
-    private String type;
+    private Integer type;
+    private Integer list; // 0 true 1 false
     private Integer pageNumber;
     public Index() {
     }
 
-    public Index(Integer position, Integer length, String type, Integer pageNumber) {
+    public Index(Integer position, Integer length, Integer type, Integer list, Integer pageNumber) {
         this.position = position;
         this.length = length;
         this.type = type;
+        this.list = list;
         this.pageNumber = pageNumber;
     }
 
@@ -33,12 +35,20 @@ public class Index implements Serializable {
         this.length = length;
     }
 
-    public String getType() {
+    public Integer getType() {
         return type;
     }
 
-    public void setType(String type) {
+    public void setType(Integer type) {
         this.type = type;
+    }
+
+    public Integer getList() {
+        return list;
+    }
+
+    public void setList(Integer list) {
+        this.list = list;
     }
 
     public Integer getPageNumber() {

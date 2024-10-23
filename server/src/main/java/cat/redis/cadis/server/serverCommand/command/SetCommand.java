@@ -3,6 +3,7 @@ package cat.redis.cadis.server.serverCommand.command;
 import cat.redis.cadis.server.serverCommand.CommandResult;
 import cat.redis.cadis.server.storage.MemoryStorage;
 import cat.redis.cadis.server.serverCommand.ServerCommand;
+import io.netty.util.CharsetUtil;
 
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
@@ -26,66 +27,76 @@ public class SetCommand implements ServerCommand {
     @Override
     public CommandResult execute(String name, String key, String value, MemoryStorage storage) throws Exception{
         CommandResult commandResult = new CommandResult();
+        commandResult.setName("set");
         commandResult.setKey(key);
         commandResult.setList(false);
         commandResult.setType(-1);
         if(key != null && value != null){
-            byte[] valueByte;
-            try{
-                int newValue = Integer.parseInt(value);
-                valueByte = ByteBuffer.allocate(4).putInt(newValue).array();
-                storage.set(key, valueByte,"Integer");
-                commandResult.setType(0);
-            }catch (Exception e){
-                valueByte = processString(commandResult,key, value,storage);
+            String[] valueStr = value.split(",");
+            if(valueStr.length > 1){
+                processList(valueStr,key,storage,commandResult);
+            }else {
+                setValue(key, value, storage, commandResult);
             }
-            commandResult.setData(valueByte);
+            commandResult.setData("1".getBytes());
         }else {
-            commandResult.setData(null);
+            commandResult.setData("0".getBytes());
         }
         commandResult.setResult(true);
         commandResult.setFunctionName("set");
         return commandResult;
     }
 
-    private byte[] processString(CommandResult commandResult, String key, Object value, MemoryStorage storage)
-            throws Exception{
+    private static void setValue(String key, String value, MemoryStorage storage, CommandResult commandResult)
+            throws Exception {
         byte[] valueByte;
-        if(value instanceof String){
-            valueByte = ((String) value).getBytes(StandardCharsets.UTF_8);
-            storage.set(key, valueByte,"String");
+        try{
+            int newValue = Integer.parseInt(value);
+            valueByte = ByteBuffer.allocate(4).putInt(newValue).array();
+            storage.set(key, valueByte,TYPE_INTEGER,1);
+            commandResult.setType(0);
+        }catch (Exception e){
+            valueByte = value.getBytes(CharsetUtil.UTF_8);
+            storage.set(key, valueByte,TYPE_STRING,1);
             commandResult.setType(1);
-        }else {
-            valueByte = processList((List<?>) value);
-            storage.set(key, valueByte,"List");
-            commandResult.setType(2);
-            commandResult.setList(true);
         }
-        return valueByte;
     }
 
-    private byte[] processList(List<?> value) {
+    private void processList(String[] value,String key, MemoryStorage storage,CommandResult commandResult) {
         try{
             ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
             DataOutputStream dataOutputStream = new DataOutputStream(byteArrayOutputStream);
-            dataOutputStream.writeInt(value.size());
-            for(Object v:value){
-                if(v instanceof String){
-                    byte[] bytes = ((String) v).getBytes(StandardCharsets.UTF_8);
-                    dataOutputStream.writeInt(TYPE_STRING);
+            dataOutputStream.writeInt(value.length);
+            if(isInteger(value)){
+                for(String v:value){
+                    byte[] byteArray = ByteBuffer.allocate(4).putInt(Integer.parseInt(v)).array();
+                    dataOutputStream.write(byteArray);
+                }
+                commandResult.setType(TYPE_INTEGER);
+            }else {
+                for(String v:value) {
+                    byte[] bytes = v.getBytes(StandardCharsets.UTF_8);
                     dataOutputStream.writeInt(bytes.length);
                     dataOutputStream.write(bytes);
-                }else {
-                    dataOutputStream.writeInt(TYPE_INTEGER);
-                    dataOutputStream.writeInt(4);
-                    dataOutputStream.write((Integer) v);
                 }
+                commandResult.setType(TYPE_STRING);
             }
-            return byteArrayOutputStream.toByteArray();
+            byte[] valueList = byteArrayOutputStream.toByteArray();
+            storage.set(key,valueList,commandResult.getType(),0);
+            commandResult.setList(true);
         }catch (Exception e){
             e.getStackTrace();
         }
-        return null;
     }
 
+    private boolean isInteger(String[] value){
+        try{
+            for(String s:value){
+                Integer.parseInt(s);
+            }
+            return true;
+        }catch (Exception e){
+            return false;
+        }
+    }
 }

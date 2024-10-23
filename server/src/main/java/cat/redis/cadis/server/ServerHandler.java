@@ -2,6 +2,8 @@ package cat.redis.cadis.server;
 
 import cat.redis.cadis.server.serverCommand.ServerCommand;
 import cat.redis.cadis.server.storage.MemoryStorage;
+import cn.hutool.core.codec.Base64;
+import cn.hutool.json.JSONUtil;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerContext;
@@ -12,6 +14,8 @@ import cat.redis.cadis.server.serverCommand.CommandResult;
 
 import java.nio.ByteBuffer;
 
+
+
 public class ServerHandler extends ChannelInboundHandlerAdapter {
     MemoryStorage memoryStorage;
     CommandFactory commandFactory;
@@ -19,9 +23,9 @@ public class ServerHandler extends ChannelInboundHandlerAdapter {
     public ServerHandler() {
     }
 
-    public ServerHandler(MemoryStorage memoryStorage) {
+    public ServerHandler(MemoryStorage memoryStorage,CommandFactory commandFactory) {
         this.memoryStorage = memoryStorage;
-        commandFactory = new CommandFactory();
+        this.commandFactory = commandFactory;
     }
 
     @Override
@@ -30,7 +34,6 @@ public class ServerHandler extends ChannelInboundHandlerAdapter {
     }
 
     private void processMessage(ChannelHandlerContext ctx,ByteBuf msg) throws Exception{
-
         //获取客户端发送过来的消息
         String message = msg.toString(CharsetUtil.UTF_8);
 
@@ -42,32 +45,31 @@ public class ServerHandler extends ChannelInboundHandlerAdapter {
         String value = strings.length > 2 ? strings[2] : null;
 
         ServerCommand serverCommand = commandFactory.create(name);
-        String result;
-        result = getResult(name, key, value, serverCommand);
+        String s;
+        if(serverCommand != null){
+            CommandResult result = serverCommand.execute(name, key, value, memoryStorage);
+            s = JSONUtil.toJsonStr(result);
+        }else {
+            s = "null";
+        }
 
-        ctx.writeAndFlush(Unpooled.copiedBuffer(result, CharsetUtil.UTF_8));
-    }
-
-    private String getResult(String name, String key, String value, ServerCommand serverCommand) throws Exception{
-        if(serverCommand == null) {
-            return  "null";
-        }
-        CommandResult execute = serverCommand.execute(name, key, value, memoryStorage);
-        if(execute.getData() != null && execute.getType() != 0){
-            return new String(execute.getData(), CharsetUtil.UTF_8);
-        }
-        if("set".equals(name) && execute.getType() == 0){
-            return String.valueOf(ByteBuffer.wrap(execute.getData()).getInt());
-        }
-        if("get".equals(name) && execute.getType() == 0){
-            return new String(execute.getData(), CharsetUtil.UTF_8);
-        }
-        return "null";
+        //内容交给客户端解析
+        ctx.writeAndFlush(Unpooled.copiedBuffer(s, CharsetUtil.UTF_8));
     }
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
         //发生异常，关闭通道
         ctx.close();
+    }
+
+
+    public static void main(String[] args) {
+        ByteBuffer a = ByteBuffer.allocate(4);
+        a.putInt(912);
+        byte[] ab = a.array();
+        String encode = Base64.encode(ab);
+        byte[] decode = Base64.decode(encode);
+        System.out.println(1);
     }
 }

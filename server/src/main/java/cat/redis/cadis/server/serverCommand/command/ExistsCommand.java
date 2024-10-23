@@ -19,6 +19,7 @@ public class ExistsCommand implements ServerCommand {
     @Override
     public CommandResult execute(String name, String key, String value, MemoryStorage storage) throws Exception{
         CommandResult commandResult = new CommandResult();
+        commandResult.setName("exists");
 
         Record record = storage.get(key);
         commandResult.setData("1".getBytes());

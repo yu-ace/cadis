@@ -21,6 +21,8 @@ public class MemoryStorage {
     private final ReentrantReadWriteLock readWriteLock = new ReentrantReadWriteLock();
     private final ReentrantReadWriteLock.ReadLock readLock = readWriteLock.readLock();
     private final ReentrantReadWriteLock.WriteLock writeLock = readWriteLock.writeLock();
+    private static final Integer TYPE_INTEGER = 0;
+    private static final Integer TYPE_STRING = 1;
     String dataPath;
     String mapPath;
     String pageNumberPath;
@@ -126,9 +128,9 @@ public class MemoryStorage {
                 ByteBuffer slice = byteBuffer.slice();
                 byte[] bytes = new byte[slice.remaining()];
                 slice.get(bytes);
-                record = new Record(key,bytes,index.getType());
+                record = new Record(key,bytes,index.getType(),index.getList());
             }else {
-                record = new Record(key,null,null);
+                record = new Record(key,null,null,1);
             }
             return record;
         }finally {
@@ -137,7 +139,7 @@ public class MemoryStorage {
     }
 
 
-    public void set(String key, byte[] value,String type) throws Exception{
+    public void set(String key, byte[] value,Integer type,Integer list) throws Exception{
         writeLock.lock();
         try{
             Integer pageNumber = getPageNumber();
@@ -172,7 +174,7 @@ public class MemoryStorage {
             byteBuffer.putInt(valueLength);
             byteBuffer.position(startPosition);
             byteBuffer.put(value);
-            Index index = new Index(startPosition, valueLength, type,pageNumber);
+            Index index = new Index(startPosition, valueLength, type,list,pageNumber);
 
             buffer.put(pageNumber,byteBuffer);
             map.put(key,index);
@@ -209,16 +211,16 @@ public class MemoryStorage {
         writeLock.lock();
         try{
             Record record = get(key);
-            if("Integer".equals(record.getType())){
+            if(TYPE_INTEGER.equals(record.getType()) && record.getList() == 1){
                 ByteBuffer newBuffer = ByteBuffer.wrap(record.getValue());
                 int value = newBuffer.getInt();
                 value++;
                 byte[] newValue = ByteBuffer.allocate(4).putInt(value).array();
-                set(key,newValue,"Integer");
+                set(key,newValue,TYPE_INTEGER,1);
                 return Integer.toString(value);
             }else if(record.getType() == null){
                 byte[] newValue = ByteBuffer.allocate(4).putInt(1).array();
-                set(key,newValue,"Integer");
+                set(key,newValue,TYPE_INTEGER,1);
                 return Integer.toString(1);
             }else {
                 return "null";
@@ -232,16 +234,16 @@ public class MemoryStorage {
         writeLock.lock();
         try{
             Record record = get(key);
-            if("Integer".equals(record.getType())){
+            if(TYPE_INTEGER.equals(record.getType()) && record.getList() == 1){
                 ByteBuffer byteBuffer = ByteBuffer.wrap(record.getValue());
                 int value = byteBuffer.getInt();
                 value--;
                 byte[] newValue = ByteBuffer.allocate(4).putInt(value).array();
-                set(key,newValue,"Integer");
+                set(key,newValue,TYPE_INTEGER,1);
                 return Integer.toString(value);
             }else if(record.getType() == null){
-                byte[] newValue = ByteBuffer.allocate(4).putInt(1).array();
-                set(key,newValue,"Integer");
+                byte[] newValue = ByteBuffer.allocate(4).putInt(-1).array();
+                set(key,newValue,TYPE_INTEGER,1);
                 return Integer.toString(-1);
             }else {
                 return "null";
@@ -323,7 +325,7 @@ public class MemoryStorage {
             }
             buffer = mapBuffer;
             for (Record record : recordList) {
-                set(record.getKey(), record.getValue(),record.getType());
+                set(record.getKey(), record.getValue(),record.getType(),record.getList());
             }
         }catch (Exception e){
             e.getStackTrace();

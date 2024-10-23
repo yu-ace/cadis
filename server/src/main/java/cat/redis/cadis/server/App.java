@@ -2,6 +2,7 @@ package cat.redis.cadis.server;
 
 import cat.redis.cadis.server.config.ConfigReader;
 import cat.redis.cadis.server.config.ServerConfig;
+import cat.redis.cadis.server.serverCommand.CommandFactory;
 import cat.redis.cadis.server.service.ScheduledService;
 import cat.redis.cadis.server.storage.MemoryStorage;
 import io.netty.bootstrap.ServerBootstrap;
@@ -17,7 +18,7 @@ import org.apache.commons.cli.CommandLine;
 public class App {
     ScheduledService scheduledService;
     MemoryStorage memoryStorage;
-
+    CommandFactory commandFactory;
     EventLoopGroup bossGroup;
     EventLoopGroup workerGroup;
 
@@ -26,18 +27,24 @@ public class App {
 
 
     public static void main(String[] args) throws Exception{
+        //读取配置文件
+        System.out.println("正在读取配置文件");
         ConfigReader config = new ConfigReader();
         CommandLine commandLine = config.createCommandLine(args);
         String redisConfig = commandLine.getOptionValue("c");
         ServerConfig serverConfig = config.readFromFile(redisConfig);
+
+        //创建对象，运行服务器
         App app = new App();
         app.init(serverConfig);
         app.run(serverConfig.getInetPort());
     }
 
     public void init(ServerConfig serverConfig) throws Exception {
+        System.out.println("初始化");
         scheduledService = new ScheduledService();
         memoryStorage = new MemoryStorage(serverConfig);
+        commandFactory = new CommandFactory();
         scheduledService.submitTask(() -> memoryStorage.clean(), serverConfig);
 
         //创建两个线程组 boosGroup、workerGroup
@@ -58,7 +65,7 @@ public class App {
                     @Override
                     protected void initChannel(SocketChannel socketChannel) throws Exception {
                         //给pipeline管道设置处理器
-                        socketChannel.pipeline().addLast(new ServerHandler(memoryStorage));
+                        socketChannel.pipeline().addLast(new ServerHandler(memoryStorage,commandFactory));
                     }
                 });//给workerGroup的EventLoop对应的管道设置处理器
     }

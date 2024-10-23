@@ -28,7 +28,7 @@ public class ScheduledService {
         item.setPeriod(serverConfig.getPeriod());
         item.setLastInvoke(null);
         tasks.add(item);
-        scheduler.scheduleAtFixedRate(function,serverConfig.getInitialDelay(),serverConfig.getPeriod(),
+        scheduler.scheduleAtFixedRate(function,30+serverConfig.getInitialDelay(),serverConfig.getPeriod(),
                 serverConfig.getTimeUnit());
         return tasks.size()-1;//返回这个任务得id
     }

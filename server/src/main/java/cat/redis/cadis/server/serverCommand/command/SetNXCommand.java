@@ -8,6 +8,7 @@ import cat.redis.cadis.server.storage.models.Record;
 import java.nio.ByteBuffer;
 
 public class SetNXCommand implements ServerCommand {
+    private static final Integer TYPE_INTEGER = 0;
     @Override
     public String getName() {
         return "setNX";
@@ -21,6 +22,7 @@ public class SetNXCommand implements ServerCommand {
     @Override
     public CommandResult execute(String name, String key, String value, MemoryStorage storage) throws Exception{
         CommandResult commandResult = new CommandResult();
+        commandResult.setName("setNX");
 
         if(key != null){
             Record record = storage.get(key);
@@ -28,11 +30,11 @@ public class SetNXCommand implements ServerCommand {
                 commandResult.setData("0".getBytes());
             }else {
                 byte[] newValue = ByteBuffer.allocate(4).putInt(1).array();
-                storage.set(key, newValue,"Integer");
+                storage.set(key, newValue,TYPE_INTEGER,1);
                 commandResult.setData("1".getBytes());
             }
         }else {
-        commandResult.setData("-1".getBytes());
+            commandResult.setData("-1".getBytes());
         }
 
         commandResult.setKey(key);

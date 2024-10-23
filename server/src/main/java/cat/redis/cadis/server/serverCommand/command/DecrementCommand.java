@@ -18,6 +18,7 @@ public class DecrementCommand implements ServerCommand {
     @Override
     public CommandResult execute(String name, String key, String value, MemoryStorage storage) throws Exception{
         CommandResult commandResult = new CommandResult();
+        commandResult.setName("decr");
 
         String result = storage.decrement(key);
 

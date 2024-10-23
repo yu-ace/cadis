@@ -3,15 +3,16 @@ package cat.redis.cadis.server.storage.models;
 public class Record {
     private String key;
     private byte[] value;
-    private String type;
-
+    private Integer type;
+    private Integer list; // 0 true 1 false
     public Record() {
     }
 
-    public Record(String key, byte[] value, String type) {
+    public Record(String key, byte[] value, Integer type,Integer list) {
         this.key = key;
         this.value = value;
         this.type = type;
+        this.list = list;
     }
 
     public String getKey() {
@@ -30,11 +31,19 @@ public class Record {
         this.value = value;
     }
 
-    public String getType() {
+    public Integer getType() {
         return type;
     }
 
-    public void setType(String type) {
+    public void setType(Integer type) {
         this.type = type;
+    }
+
+    public Integer getList() {
+        return list;
+    }
+
+    public void setList(Integer list) {
+        this.list = list;
     }
 }

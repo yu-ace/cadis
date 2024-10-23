@@ -21,6 +21,7 @@ public class ListCommand implements ServerCommand {
     @Override
     public CommandResult execute(String name, String key, String value, MemoryStorage storage) throws Exception{
         CommandResult commandResult = new CommandResult();
+        commandResult.setName("list");
 
         StringBuilder stringBuilder = new StringBuilder();
         Set<String> keys = storage.keyList();
@@ -33,10 +34,9 @@ public class ListCommand implements ServerCommand {
         }else {
             commandResult.setData(null);
         }
-
         commandResult.setKey(key);
         commandResult.setResult(true);
-        commandResult.setFunctionName("stat");
+        commandResult.setFunctionName("list");
         commandResult.setType(1);
         commandResult.setList(true);
         return commandResult;

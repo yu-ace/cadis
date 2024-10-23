@@ -20,6 +20,7 @@ public class DeleteCommand implements ServerCommand {
         String result = storage.delete(key);
 
         CommandResult commandResult = new CommandResult();
+        commandResult.setName("delete");
         commandResult.setList(false);
         commandResult.setFunctionName("delete");
         commandResult.setKey(key);

@@ -1,12 +1,12 @@
-package cat.redis.cadis.server.serverCommand;
+package cat.redis.cadis.client.model;
 
 public class CommandResult {
     String name;
     String key;
     Integer type; // 0 int 1 string 2 object
+    Boolean list;
     byte[]data; // value
     String functionName; // 指令名称
-    Boolean list;
     Boolean result; //是否有结果
     public CommandResult() {
     }
